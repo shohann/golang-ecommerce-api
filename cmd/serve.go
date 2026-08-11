@@ -6,7 +6,10 @@ import (
 
 	"github.com/shohann/golang-ecommerce-api/config"
 	"github.com/shohann/golang-ecommerce-api/infra/db"
+	"github.com/shohann/golang-ecommerce-api/repo"
 	"github.com/shohann/golang-ecommerce-api/rest"
+	userHandler "github.com/shohann/golang-ecommerce-api/rest/handlers/user"
+	"github.com/shohann/golang-ecommerce-api/user"
 )
 
 func Serve() {
@@ -28,19 +31,20 @@ func Serve() {
 
 	// repos
 	// productRepo := repo.NewProductRepo(dbCon)
-	// userRepo := repo.NewUserRepo(dbCon)
+	userRepo := repo.NewUserRepo(dbCon)
 
 	// domains
-	// usrSvc := user.NewService(userRepo)
+	usrSvc := user.NewService(userRepo)
 	// prdctSvc := product.NewService(productRepo)
 
 	// productHandler := prdctHandler.NewHandler(middlewares, prdctSvc)
-	// userHandler := usrHandler.NewHandler(cnf, usrSvc)
+	// userHandler := NewHandler(cnf, usrSvc)
+
+	usrHandler := userHandler.NewHandler(cnf, usrSvc)
 
 	server := rest.NewServer(
 		cnf,
-		// productHandler,
-		// userHandler,
+		usrHandler,
 	)
 	server.Start()
 }

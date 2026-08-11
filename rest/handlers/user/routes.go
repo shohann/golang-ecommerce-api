@@ -1,0 +1,13 @@
+package user
+
+import (
+	"net/http"
+
+	middleware "github.com/shohann/golang-ecommerce-api/rest/middlewares"
+)
+
+func (h *Handler) RegisterRoutes(mux *http.ServeMux, manager *middleware.Manager) {
+	mux.Handle("POST /users", manager.With(
+		http.HandlerFunc(h.CreateUser),
+	))
+}
