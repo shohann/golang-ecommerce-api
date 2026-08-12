@@ -35,10 +35,9 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&req)
-
 	if err != nil {
 		util.SendError(w, http.StatusBadRequest, "Invalid request body")
-
+		return
 	}
 
 	createdUser, err := h.svc.Create(domain.User{
@@ -46,9 +45,8 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Email:    req.Email,
 		Password: req.Password,
 	})
-
 	if err != nil {
-		util.SendError(w, http.StatusInternalServerError, "Failed to create user")
+		util.SendAppError(w, err)
 		return
 	}
 
