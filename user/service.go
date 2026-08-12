@@ -50,10 +50,20 @@ func (svc *service) Create(user domain.User) (*domain.User, error) {
 	return usr, nil
 }
 
-func (svc *service) Find(email string, pass string) (*domain.User, error) {
-	usr, err := svc.userRepo.FindAuthUser(email, pass)
+func (svc *service) Login(email string, pass string) (*domain.User, error) {
+	usr, err := svc.userRepo.FindUserByEmail(email)
 	if err != nil {
 		return nil, apperr.WrapInternal("find auth user", err)
+	}
+
+	if usr == nil {
+		return nil, apperr.Conflict("invalid credentials")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(pass))
+
+	if err != nil {
+		return nil, apperr.Conflict("invalid credentials")
 	}
 
 	return usr, nil

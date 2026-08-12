@@ -58,16 +58,16 @@ func (r *userRepo) Create(user domain.User) (*domain.User, error) {
 	return &user, nil
 }
 
-func (r *userRepo) FindAuthUser(email, pass string) (*domain.User, error) {
+func (r *userRepo) FindUserByEmail(email string) (*domain.User, error) {
 	var user domain.User
 	query := `
 	  SELECT id, full_name, email, password_hash, role
       FROM users
-      WHERE email = $1 AND password_hash = $2
+      WHERE email = $1
       LIMIT 1
 	`
 
-	err := r.db.Get(&user, query, email, pass)
+	err := r.db.Get(&user, query, email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, apperr.NotFound("user not found")
