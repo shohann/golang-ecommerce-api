@@ -3,24 +3,29 @@ package user
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/shohann/golang-ecommerce-api/config"
 	"github.com/shohann/golang-ecommerce-api/domain"
+	middleware "github.com/shohann/golang-ecommerce-api/rest/middlewares"
 	"github.com/shohann/golang-ecommerce-api/util"
 )
 
 type Handler struct {
-	cnf *config.Config
-	svc Service
+	cnf         *config.Config
+	svc         Service
+	middlewares *middleware.Middlewares
 }
 
 func NewHandler(
 	cnf *config.Config,
 	svc Service,
+	middlewares *middleware.Middlewares,
 ) *Handler {
 	return &Handler{
-		cnf: cnf,
-		svc: svc,
+		cnf:         cnf,
+		svc:         svc,
+		middlewares: middlewares,
 	}
 }
 
@@ -80,4 +85,26 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.SendData(w, http.StatusOK, loginResponse)
+}
+
+func (h *Handler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
+	payload, ok := middleware.GetUserPayload(r)
+	if !ok || payload.Sub == "" {
+		util.SendError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	id, err := strconv.Atoi(payload.Sub)
+	if err != nil {
+		util.SendError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	user, err := h.svc.GetProfile(id)
+	if err != nil {
+		util.SendAppError(w, err)
+		return
+	}
+
+	util.SendData(w, http.StatusOK, user)
 }

@@ -1,23 +1,29 @@
 package user
 
 import (
+	"fmt"
+
 	"github.com/shohann/golang-ecommerce-api/apperr"
+	"github.com/shohann/golang-ecommerce-api/config"
 	"github.com/shohann/golang-ecommerce-api/domain"
 	userHandler "github.com/shohann/golang-ecommerce-api/rest/handlers/user"
+	"github.com/shohann/golang-ecommerce-api/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type service struct {
 	userRepo UserRepo
+	cnf      *config.Config
 }
 
 type Service interface {
 	userHandler.Service
 }
 
-func NewService(userRepo UserRepo) Service {
+func NewService(userRepo UserRepo, cnf *config.Config) Service {
 	return &service{
 		userRepo: userRepo,
+		cnf:      cnf,
 	}
 }
 
@@ -50,7 +56,7 @@ func (svc *service) Create(user domain.User) (*domain.User, error) {
 	return usr, nil
 }
 
-func (svc *service) Login(email string, pass string) (*domain.User, error) {
+func (svc *service) Login(email string, pass string) (*domain.LoginResult, error) {
 	usr, err := svc.userRepo.FindUserByEmail(email)
 	if err != nil {
 		return nil, apperr.WrapInternal("find auth user", err)
@@ -64,6 +70,29 @@ func (svc *service) Login(email string, pass string) (*domain.User, error) {
 
 	if err != nil {
 		return nil, apperr.Conflict("invalid credentials")
+	}
+
+	accessToken, err := util.CreateJWT(svc.cnf.JWTSecretKey, util.Payload{
+		Sub:      fmt.Sprint(usr.ID),
+		FullName: usr.FullName,
+		Email:    usr.Email,
+		Role:     usr.Role,
+	})
+
+	return &domain.LoginResult{
+		ID:          usr.ID,
+		AccessToken: accessToken,
+	}, nil
+}
+
+func (svc *service) GetProfile(id int) (*domain.User, error) {
+	usr, err := svc.userRepo.FindUserById(id)
+	if err != nil {
+		return nil, apperr.WrapInternal("find user by id", err)
+	}
+
+	if usr == nil {
+		return nil, apperr.NotFound("user not found")
 	}
 
 	return usr, nil

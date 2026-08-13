@@ -78,6 +78,28 @@ func (r *userRepo) FindUserByEmail(email string) (*domain.User, error) {
 	return &user, nil
 }
 
+func (r *userRepo) FindUserById(id int) (*domain.User, error) {
+	var user domain.User
+
+	query := `
+	  SELECT id, full_name, email, password_hash, role
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+	`
+
+	err := r.db.Get(&user, query, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, apperr.NotFound("user not found")
+		}
+		return nil, apperr.Internal("find auth user", err)
+	}
+
+	return &user, nil
+
+}
+
 func (r *userRepo) CheckUniqueUser(email string) (bool, error) {
 	var exists bool
 

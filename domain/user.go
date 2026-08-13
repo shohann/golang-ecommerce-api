@@ -7,3 +7,8 @@ type User struct {
 	Password string `json:"password" db:"password_hash"`
 	Role     string `json:"role" db:"role"`
 }
+
+type LoginResult struct {
+	ID          int    `json:"id"`
+	AccessToken string `json:"access_token"`
+}

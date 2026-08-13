@@ -1,12 +1,25 @@
 package middleware
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/shohann/golang-ecommerce-api/util"
 )
+
+type contextKey string
+
+const UserPayloadKey contextKey = "user_payload"
+
+func GetUserPayload(r *http.Request) (util.Payload, bool) {
+	payload, ok := r.Context().Value(UserPayloadKey).(util.Payload)
+	return payload, ok
+}
 
 func (m *Middlewares) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -18,13 +31,12 @@ func (m *Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		headerArr := strings.Split(header, " ")
-
-		accessToken := headerArr[1]
-
 		if len(headerArr) != 2 || headerArr[0] != "Bearer" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		accessToken := headerArr[1]
 
 		tokenParts := strings.Split(accessToken, ".")
 		if len(tokenParts) != 3 {
@@ -51,7 +63,21 @@ func (m *Middlewares) Authenticate(next http.Handler) http.Handler {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r)
+
+		payloadBytes, err := base64.URLEncoding.WithPadding(base64.NoPadding).DecodeString(jwtPayload)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		var payload util.Payload
+		if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserPayloadKey, payload)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
