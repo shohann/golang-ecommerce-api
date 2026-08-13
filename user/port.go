@@ -7,4 +7,6 @@ type UserRepo interface {
 	FindUserByEmail(email string) (*domain.User, error)
 	CheckUniqueUser(email string) (bool, error)
 	FindUserById(id int) (*domain.User, error)
+	List(limit, offset int64) ([]domain.User, error)
+	Count() (int64, error)
 }

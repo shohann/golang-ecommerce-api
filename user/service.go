@@ -56,7 +56,7 @@ func (svc *service) Create(user domain.User) (*domain.User, error) {
 	return usr, nil
 }
 
-func (svc *service) Login(email string, pass string) (*domain.LoginResult, error) {
+func (svc *service) Login(email string, pass string) (*userHandler.LoginResponse, error) {
 	usr, err := svc.userRepo.FindUserByEmail(email)
 	if err != nil {
 		return nil, apperr.WrapInternal("find auth user", err)
@@ -67,7 +67,6 @@ func (svc *service) Login(email string, pass string) (*domain.LoginResult, error
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(pass))
-
 	if err != nil {
 		return nil, apperr.Conflict("invalid credentials")
 	}
@@ -78,8 +77,11 @@ func (svc *service) Login(email string, pass string) (*domain.LoginResult, error
 		Email:    usr.Email,
 		Role:     usr.Role,
 	})
+	if err != nil {
+		return nil, apperr.Internal("create access token", err)
+	}
 
-	return &domain.LoginResult{
+	return &userHandler.LoginResponse{
 		ID:          usr.ID,
 		AccessToken: accessToken,
 	}, nil
@@ -96,4 +98,30 @@ func (svc *service) GetProfile(id int) (*domain.User, error) {
 	}
 
 	return usr, nil
+}
+
+func (svc *service) List(page, limit int64) ([]domain.User, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	offset := (page - 1) * limit
+
+	total, err := svc.userRepo.Count()
+	if err != nil {
+		return nil, 0, apperr.WrapInternal("count users", err)
+	}
+
+	users, err := svc.userRepo.List(limit, offset)
+	if err != nil {
+		return nil, 0, apperr.WrapInternal("list users", err)
+	}
+
+	return users, total, nil
 }

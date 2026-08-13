@@ -120,3 +120,38 @@ func (r *userRepo) CheckUniqueUser(email string) (bool, error) {
 
 	return exists, nil
 }
+
+func (r *userRepo) List(limit, offset int64) ([]domain.User, error) {
+	var users []domain.User
+
+	query := `
+		SELECT id, full_name, email, role
+		FROM users
+		ORDER BY id DESC
+		LIMIT $1 OFFSET $2
+	`
+
+	err := r.db.Select(&users, query, limit, offset)
+	if err != nil {
+		return nil, apperr.Internal("list users", err)
+	}
+
+	if users == nil {
+		users = []domain.User{}
+	}
+
+	return users, nil
+}
+
+func (r *userRepo) Count() (int64, error) {
+	var count int64
+
+	query := `SELECT COUNT(*) FROM users`
+
+	err := r.db.Get(&count, query)
+	if err != nil {
+		return 0, apperr.Internal("count users", err)
+	}
+
+	return count, nil
+}

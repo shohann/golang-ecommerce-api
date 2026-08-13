@@ -29,17 +29,6 @@ func NewHandler(
 	}
 }
 
-type ReqCreateUser struct {
-	FullName string `json:"full_name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type ReqqLoginUser struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req ReqCreateUser
 
@@ -60,15 +49,14 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	util.SendData(w, http.StatusCreated, createdUser)
+	util.SendData(w, http.StatusCreated, ToUserResponse(createdUser))
 }
 
 func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
-	var req ReqqLoginUser
+	var req ReqLoginUser
 
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode((&req))
-
+	err := decoder.Decode(&req)
 	if err != nil {
 		util.SendError(w, http.StatusBadRequest, "Invalid request body")
 		return
@@ -78,7 +66,6 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		req.Email,
 		req.Password,
 	)
-
 	if err != nil {
 		util.SendAppError(w, err)
 		return
@@ -106,5 +93,40 @@ func (h *Handler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	util.SendData(w, http.StatusOK, user)
+	util.SendData(w, http.StatusOK, ToUserResponse(user))
+}
+
+func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	page := int64(1)
+	limit := int64(10)
+
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		parsed, err := strconv.ParseInt(pageStr, 10, 64)
+		if err != nil || parsed < 1 {
+			util.SendError(w, http.StatusBadRequest, "Invalid page")
+			return
+		}
+		page = parsed
+	}
+
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		parsed, err := strconv.ParseInt(limitStr, 10, 64)
+		if err != nil || parsed < 1 {
+			util.SendError(w, http.StatusBadRequest, "Invalid limit")
+			return
+		}
+		limit = parsed
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+
+	users, total, err := h.svc.List(page, limit)
+	if err != nil {
+		util.SendAppError(w, err)
+		return
+	}
+
+	util.SendPage(w, ToUserResponses(users), page, limit, total)
 }

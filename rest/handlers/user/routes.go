@@ -19,4 +19,10 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux, manager *middleware.Manager
 		http.HandlerFunc(h.GetUserProfile),
 		h.middlewares.Authenticate,
 	))
+
+	mux.Handle("GET /users", manager.With(
+		http.HandlerFunc(h.ListUsers),
+		h.middlewares.RequireAdmin,
+		h.middlewares.Authenticate,
+	))
 }
