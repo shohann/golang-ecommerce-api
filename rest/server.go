@@ -7,25 +7,30 @@ import (
 	"strconv"
 
 	"github.com/shohann/golang-ecommerce-api/config"
+	"github.com/shohann/golang-ecommerce-api/rest/handlers/category"
+	"github.com/shohann/golang-ecommerce-api/rest/handlers/product"
 	"github.com/shohann/golang-ecommerce-api/rest/handlers/user"
 	middleware "github.com/shohann/golang-ecommerce-api/rest/middlewares"
 )
 
 type Server struct {
-	cnf *config.Config
-	// productHandler *product.Handler
-	userHandler *user.Handler
+	cnf             *config.Config
+	productHandler  *product.Handler
+	userHandler     *user.Handler
+	categoryHandler *category.Handler
 }
 
 func NewServer(
 	cnf *config.Config,
-	// productHandler *product.Handler,
+	productHandler *product.Handler,
 	userHandler *user.Handler,
+	categoryHandler *category.Handler,
 ) *Server {
 	return &Server{
-		cnf:         cnf,
-		userHandler: userHandler,
-		// productHandler: productHandler,
+		cnf:             cnf,
+		userHandler:     userHandler,
+		productHandler:  productHandler,
+		categoryHandler: categoryHandler,
 	}
 }
 
@@ -40,8 +45,9 @@ func (server *Server) Start() {
 	mux := http.NewServeMux()
 	warappedMux := manager.WrapMux(mux)
 
-	// server.productHandler.RegisterRoutes(mux, manager)
+	server.productHandler.RegisterRoutes(mux, manager)
 	server.userHandler.RegisterRoutes(mux, manager)
+	server.categoryHandler.RegisterRoutes(mux, manager)
 
 	addr := ":" + strconv.Itoa(server.cnf.HttpPort)
 	fmt.Println("Server running on port", addr)
