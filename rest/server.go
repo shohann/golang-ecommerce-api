@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/shohann/golang-ecommerce-api/config"
+	"github.com/shohann/golang-ecommerce-api/rest/handlers/cart"
 	"github.com/shohann/golang-ecommerce-api/rest/handlers/category"
 	"github.com/shohann/golang-ecommerce-api/rest/handlers/product"
 	"github.com/shohann/golang-ecommerce-api/rest/handlers/user"
@@ -18,6 +19,7 @@ type Server struct {
 	productHandler  *product.Handler
 	userHandler     *user.Handler
 	categoryHandler *category.Handler
+	cartHandler     *cart.Handler
 }
 
 func NewServer(
@@ -25,12 +27,14 @@ func NewServer(
 	productHandler *product.Handler,
 	userHandler *user.Handler,
 	categoryHandler *category.Handler,
+	cartHandler *cart.Handler,
 ) *Server {
 	return &Server{
 		cnf:             cnf,
 		userHandler:     userHandler,
 		productHandler:  productHandler,
 		categoryHandler: categoryHandler,
+		cartHandler:     cartHandler,
 	}
 }
 
