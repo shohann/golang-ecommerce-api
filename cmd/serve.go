@@ -8,11 +8,13 @@ import (
 	"github.com/shohann/golang-ecommerce-api/category"
 	"github.com/shohann/golang-ecommerce-api/config"
 	"github.com/shohann/golang-ecommerce-api/infra/db"
+	"github.com/shohann/golang-ecommerce-api/order"
 	"github.com/shohann/golang-ecommerce-api/product"
 	"github.com/shohann/golang-ecommerce-api/repo"
 	"github.com/shohann/golang-ecommerce-api/rest"
 	cartHandler "github.com/shohann/golang-ecommerce-api/rest/handlers/cart"
 	categoryHandler "github.com/shohann/golang-ecommerce-api/rest/handlers/category"
+	orderHandler "github.com/shohann/golang-ecommerce-api/rest/handlers/order"
 	productsHandler "github.com/shohann/golang-ecommerce-api/rest/handlers/product"
 	userHandler "github.com/shohann/golang-ecommerce-api/rest/handlers/user"
 	middleware "github.com/shohann/golang-ecommerce-api/rest/middlewares"
@@ -47,12 +49,14 @@ func Serve() {
 	categorySvc := category.NewService(categoryRepo)
 	prdctSvc := product.NewService(productRepo, cnf)
 	cartItemSvc := cart.NewService(cartItemRepo, cnf)
+	orderSvc := order.NewService(cartItemRepo, cnf)
 
 	// handlers
 	productHandler := productsHandler.NewHandler(cnf, middlewares, prdctSvc)
 	usrHandler := userHandler.NewHandler(cnf, usrSvc, middlewares)
 	catHandler := categoryHandler.NewHandler(cnf, categorySvc, middlewares)
 	crtHandler := cartHandler.NewHandler(cnf, middlewares, cartItemSvc)
+	orderHandler := orderHandler.NewHandler(cnf, middlewares, orderSvc)
 
 	server := rest.NewServer(
 		cnf,
@@ -60,6 +64,7 @@ func Serve() {
 		usrHandler,
 		catHandler,
 		crtHandler,
+		orderHandler,
 	)
 	server.Start()
 }

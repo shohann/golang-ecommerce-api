@@ -57,7 +57,7 @@ func (svc *service) GetCartByUserId(userId int64) ([]domain.CartItem, error) {
 	}
 
 	if userCartItems == nil {
-		return nil, apperr.NotFound("user not found")
+		return nil, apperr.NotFound("cart items not found")
 	}
 
 	return userCartItems, nil
