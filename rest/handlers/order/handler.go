@@ -33,14 +33,13 @@ func (h *Handler) OrderCheckOut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cartItems, err := h.svc.OrderCheckOut(userID)
+	createdOrder, err := h.svc.OrderCheckOut(userID)
 	if err != nil {
 		util.SendAppError(w, err)
 		return
 	}
 
-	util.SendData(w, http.StatusCreated, cartItems)
-	// util.SendData(w, http.StatusCreated, userID)
+	util.SendData(w, http.StatusCreated, createdOrder)
 }
 
 func authUserID(w http.ResponseWriter, r *http.Request) (int64, bool) {

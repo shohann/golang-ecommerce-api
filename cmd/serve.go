@@ -43,13 +43,14 @@ func Serve() {
 	categoryRepo := repo.NewCategoryRepo(dbCon)
 	productRepo := repo.NewProductRepo(dbCon)
 	cartItemRepo := repo.NewCartItemRepo(dbCon)
+	orderRepo := repo.NewOrderRepo(dbCon)
 
 	// domains
 	usrSvc := user.NewService(userRepo, cnf)
 	categorySvc := category.NewService(categoryRepo)
 	prdctSvc := product.NewService(productRepo, cnf)
 	cartItemSvc := cart.NewService(cartItemRepo, cnf)
-	orderSvc := order.NewService(cartItemRepo, cnf)
+	orderSvc := order.NewService(cartItemRepo, orderRepo, cnf)
 
 	// handlers
 	productHandler := productsHandler.NewHandler(cnf, middlewares, prdctSvc)
