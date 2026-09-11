@@ -8,6 +8,7 @@ import (
 	"github.com/shohann/golang-ecommerce-api/category"
 	"github.com/shohann/golang-ecommerce-api/config"
 	"github.com/shohann/golang-ecommerce-api/infra/db"
+	"github.com/shohann/golang-ecommerce-api/infra/rabbitmq"
 	"github.com/shohann/golang-ecommerce-api/order"
 	"github.com/shohann/golang-ecommerce-api/product"
 	"github.com/shohann/golang-ecommerce-api/repo"
@@ -36,6 +37,20 @@ func Serve() {
 		os.Exit(1)
 	}
 
+	rmqConn, err := rabbitmq.Connect(cnf.RabbitMQURL)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer rmqConn.Close()
+
+	orderPublisher, err := rabbitmq.NewPublisher(rmqConn, cnf.RabbitMQOrderQueue)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer orderPublisher.Close()
+
 	middlewares := middleware.NewMiddlewares(cnf)
 
 	// repos
@@ -50,7 +65,7 @@ func Serve() {
 	categorySvc := category.NewService(categoryRepo)
 	prdctSvc := product.NewService(productRepo, cnf)
 	cartItemSvc := cart.NewService(cartItemRepo, cnf)
-	orderSvc := order.NewService(cartItemRepo, orderRepo, cnf)
+	orderSvc := order.NewService(cartItemRepo, orderRepo, orderPublisher, cnf)
 
 	// handlers
 	productHandler := productsHandler.NewHandler(cnf, middlewares, prdctSvc)

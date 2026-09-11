@@ -13,6 +13,7 @@ import (
 type service struct {
 	cartItemRepo cart.CartItemRepo
 	orderRepo    OrderRepo
+	publisher    OrderEventPublisher
 	cnf          *config.Config
 }
 
@@ -23,11 +24,13 @@ type Service interface {
 func NewService(
 	cartItemRepo cart.CartItemRepo,
 	orderRepo OrderRepo,
+	publisher OrderEventPublisher,
 	cnf *config.Config,
 ) Service {
 	return &service{
 		cartItemRepo: cartItemRepo,
 		orderRepo:    orderRepo,
+		publisher:    publisher,
 		cnf:          cnf,
 	}
 }
@@ -81,6 +84,16 @@ func (svc *service) OrderCheckOut(userId int64) (*domain.Order, error) {
 	createdOrder, err := svc.orderRepo.Create(orderData)
 	if err != nil {
 		return nil, apperr.WrapInternal("create_order", err)
+	}
+
+	err = svc.publisher.PublishOrderPlaced(OrderPlacedEvent{
+		OrderID:     createdOrder.ID,
+		UserID:      createdOrder.UserID,
+		TotalAmount: createdOrder.TotalAmount,
+		Status:      string(createdOrder.Status),
+	})
+	if err != nil {
+		return nil, apperr.WrapInternal("publish_order_placed", err)
 	}
 
 	return createdOrder, nil

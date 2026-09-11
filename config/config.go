@@ -18,11 +18,13 @@ type DBConfig struct {
 }
 
 type Config struct {
-	Version      string
-	ServiceName  string
-	HttpPort     int
-	JWTSecretKey string
-	DB           *DBConfig
+	Version            string
+	ServiceName        string
+	HttpPort           int
+	JWTSecretKey       string
+	DB                 *DBConfig
+	RabbitMQURL        string
+	RabbitMQOrderQueue string
 }
 
 var configurations *Config
@@ -107,6 +109,17 @@ func LoadConfig() {
 		os.Exit(1)
 	}
 
+	rabbitMQURL := os.Getenv("RABBITMQ_URL")
+	if rabbitMQURL == "" {
+		fmt.Println("RABBITMQ_URL is required")
+		os.Exit(1)
+	}
+
+	rabbitMQOrderQueue := os.Getenv("RABBITMQ_ORDER_QUEUE")
+	if rabbitMQOrderQueue == "" {
+		rabbitMQOrderQueue = "orders.placed"
+	}
+
 	dBConfig := &DBConfig{
 		Host:          dbHost,
 		Port:          int(dbprt),
@@ -117,11 +130,13 @@ func LoadConfig() {
 	}
 
 	configurations = &Config{
-		Version:      version,
-		ServiceName:  serviceName,
-		HttpPort:     int(port),
-		JWTSecretKey: jwtSecretKey,
-		DB:           dBConfig,
+		Version:            version,
+		ServiceName:        serviceName,
+		HttpPort:           int(port),
+		JWTSecretKey:       jwtSecretKey,
+		DB:                 dBConfig,
+		RabbitMQURL:        rabbitMQURL,
+		RabbitMQOrderQueue: rabbitMQOrderQueue,
 	}
 
 }
